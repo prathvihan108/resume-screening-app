@@ -1,4 +1,4 @@
-# AI Resume Screening System
+# AI Resume Screening System(In Progress-Day-1)
 
 This project is a high-performance resume screening tool built during my internship. It leverages the **Endee Labs Vector Engine** as a local database service to store and search candidate resumes using semantic AI embeddings.
 
@@ -59,11 +59,11 @@ git clone git@github.com:EndeeLabs/endee.git
 
 Using HTTP:
 ```
-git clone https://github.com/EndeeLabs/endee.git
+git clone https://github.com/prathvihan108/resume-screening-app.git
 ```
 Using SSH:
 ```
-git clone git@github.com:EndeeLabs/endee.git
+git clone git@github.com:prathvihan108/resume-screening-app.git
 ```
 
 
