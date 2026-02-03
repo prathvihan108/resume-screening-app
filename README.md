@@ -11,8 +11,6 @@ The system is designed using a microservices-inspired approach, separating the d
 - **`endee-09/`**: The core Vector Database (C++ engine) cloned from the official [Endee repository](https://github.com/EndeeLabs/endee). It handles high-speed vector storage and similarity searches locally on your machine.
 - **`resume-screening-app/`**: The custom application layer. It handles PDF text extraction, AI embedding generation (NLP), and provides a REST API for the frontend.
 
-
-
 ---
 
 # AI Resume Screening System
@@ -28,13 +26,12 @@ The system is designed using a microservices-inspired approach, separating the d
 - **`endee-09/`**: The core Vector Database (C++ engine). Cloned from the official [Endee repository](https://github.com/EndeeLabs/endee).
 - **`resume-screening-app/`**: The custom application layer. It handles PDF text extraction, AI embedding generation (NLP), and provides a REST API for the frontend.
 
-
-
 ---
 
 ## 🚀 Setup & Installation
 
 ### 1. Workspace Initialization
+
 First, create your workspace directory and clone both the database engine and the application repository.
 
 ```bash
@@ -46,32 +43,39 @@ cd EndeeLabs
 ### 2. Clone the Endee Vector Engine
 
 Using HTTP:
+
 ```
 git clone https://github.com/EndeeLabs/endee.git
 ```
+
 Using SSH:
+
 ```
 git clone git@github.com:EndeeLabs/endee.git
 ```
+
 > **Note:** I have renamed my local copy of the official Endee repository to **"endee-09"**.
 
 ### 3. Clone the Application Repository
 
 Using HTTP:
+
 ```
 git clone https://github.com/prathvihan108/resume-screening-app.git
 ```
+
 Using SSH:
+
 ```
 git clone git@github.com:prathvihan108/resume-screening-app.git
 ```
 
-
 ### 4. Initializing the Endee Vector Database
 
- we build the Docker image from source.
+we build the Docker image from source.
 
 **Navigate to the engine directory:**
+
 ```
 cd endee-09
 ```
@@ -81,13 +85,37 @@ cd endee-09
 ```
 docker build -t endee-oss:latest -f infra/Dockerfile --build-arg BUILD_ARCH=avx2 .
 ```
+
 **Start the service:**
 
 ```
 docker compose up -d
 ```
 
+### 5. Setting Up the Application (Day 1)
 
+To ensure a clean development environment, we use a Python Virtual Environment (VENV) to manage dependencies for the FastAPI backend.
 
+**Navigate to the application directory:**
 
+```bash
+cd ../resume-screening-app
+```
 
+**Step 1: Create the Virtual Environment This isolates our project libraries from the system-wide Python installation.**
+
+```
+python3 -m venv venv
+```
+
+**Step 2: Activate the Environment On Ubuntu, run the following command to enter the virtual environment:**
+
+```
+source venv/bin/activate
+```
+
+**Step 3: Install Project Requirements We install the core libraries required for AI processing and API development:**
+
+```
+pip install -r backend/requirements.txt
+```
