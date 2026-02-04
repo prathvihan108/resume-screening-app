@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+import io
+from fastapi import FastAPI, UploadFile, File  
 from .services.endee_client import EndeeClient
+from .core.parser import ResumeParser
 
 app = FastAPI(title="Resume Screening AI - Backend")
-# Initialize the client (connecting to your running Docker engine)
+parser = ResumeParser()
+
 db_client = EndeeClient()
 
 @app.get("/")
@@ -20,4 +23,23 @@ def test_connection():
     return {
         "database_connection": "Failed",
         "message": "Cannot reach the Docker engine. Is 'docker compose up' running?"
+    }
+
+@app.post("/parse")
+async def parse_resume(file: UploadFile = File(...)):
+    # Read the file into memory
+    content = await file.read()
+    pdf_stream = io.BytesIO(content)
+    
+    # Extract and Segment
+    raw_text = parser.extract_raw_text(pdf_stream)
+    structured_data = parser.segment_resume(raw_text)
+    
+    return {
+        "filename": file.filename,
+        "segments": {
+            "skills_preview": structured_data["skills"][:200],
+            "experience_preview": structured_data["experience"][:200]
+        },
+        "full_text_length": len(raw_text)
     }
