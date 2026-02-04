@@ -1,6 +1,15 @@
+# Web Framework
 fastapi
 uvicorn
-requests
-pypdf
-sentence-transformers
 python-multipart
+
+# PDF Processing
+pypdf
+
+# AI & Embeddings
+sentence-transformers
+requests
+python-dotenv
+
+# Data Utilities
+pydantic
