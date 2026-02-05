@@ -10,6 +10,22 @@ class ResumeParser:
             "education": r"(?i)\b(education|academic background|qualifications)\b"
         }
 
+    def extract_context_summary(self, text):
+        """Extracts a dense summary for better semantic search."""
+        # Regex for 'X years of experience'
+        exp_match = re.search(r"(\d+)\+?\s*(years?|yrs?)", text, re.IGNORECASE)
+        experience = exp_match.group(0) if exp_match else "Experience not specified"
+        
+        # Look for common Indian tech hubs 
+        cities = ["Bengaluru", "Bangalore", "Pune", "Mumbai", "Hyderabad", "Delhi", "Chennai", "Gurgaon"]
+        found_city = "Remote/Unknown"
+        for city in cities:
+            if city.lower() in text.lower():
+                found_city = city
+                break
+                
+        return {"location": found_city, "experience_years": experience}
+
     def extract_raw_text(self, pdf_file):
         """Extracts text from PDF pages and joins them."""
         reader = PdfReader(pdf_file)

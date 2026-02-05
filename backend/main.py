@@ -108,33 +108,51 @@ async def upload_batch(files: List[UploadFile] = File(...)):
             raw_text = parser.extract_raw_text(io.BytesIO(content))
             structured_data = parser.segment_resume(raw_text)
             
-            # 2. Vectorize (Using the Skills section)
-            text_to_embed = structured_data["skills"] if structured_data["skills"] else raw_text[:500]
+            # --- NEW: Extract Contextual Data ---
+            # We scan the raw text for city names and years of experience
+            cities = ["Bengaluru", "Bangalore", "Pune", "Mumbai", "Hyderabad", "Delhi", "Chennai"]
+            detected_city = "Not Specified"
+            for city in cities:
+                if city.lower() in raw_text.lower():
+                    detected_city = city
+                    break
+            
+            # Simple regex to find experience (e.g., "5 years", "3+ yrs")
+            import re
+            exp_match = re.search(r"(\d+)\+?\s*(years?|yrs?)", raw_text, re.IGNORECASE)
+            exp_years = exp_match.group(0) if exp_match else "Not Specified"
+
+            # 2. Vectorize (Using "Rich Text" for Context)
+            # We combine skills, city, and experience into one sentence.
+            # This allows the AI to "map" the resume to multi-part queries.
+            text_to_embed = (
+                f"Candidate Skills: {structured_data['skills']}. "
+                f"Location: {detected_city}. "
+                f"Experience: {exp_years}."
+            )
             vector = embedder.generate_vector(text_to_embed)
             
             # 3. Store in Endee
-        
             success = db_client.insert_resume(
                 filename=file.filename,
                 vector=vector,
                 metadata={
                     "skills": structured_data["skills"],
-                    "experience": structured_data["experience"]
+                    "experience_text": structured_data["experience"], # Full segment
+                    "detected_location": detected_city,               # Searchable meta
+                    "years_of_experience": exp_years                  # Searchable meta
                 }
             )
 
             if success:
                 report.append({"file": file.filename, "status": "Success"})
             else:
-                report.append({"file": file.filename, "status": "Database Push Failed - Check if Docker is running"})
-            
-          
+                report.append({"file": file.filename, "status": "Database Push Failed"})
         
         except Exception as e:
             report.append({"file": file.filename, "status": f"Error: {str(e)}"})
             
     return {"summary": report, "total_processed": len(report)}
-
 @app.get("/search")
 async def search_resumes(query: str, top_k: int = 5):
     # 1. Generate vector from user search string
