@@ -60,20 +60,19 @@ class EndeeClient:
             # 1. Get the index object first, as shown in the docs
             index = self.client.get_index(name=self.index_name)
             
-            # 2. Build the list containing the resume data
-            # Note: We use 'meta' for metadata and 'vector' for the 384-dim embedding
+
             data_to_upsert = [
                 {
-                    "id": str(uuid.uuid4()),  # Unique ID for each resume
-                    "vector": vector,         # Your 384-dimensional list
-                    "meta": {                 # Must be 'meta', not 'payload'
+                    "id": str(uuid.uuid4()),  
+                    "vector": vector,         
+                    "meta": {                 
                         "filename": filename,
-                        **metadata            # Includes skills, experience, etc.
+                        **metadata            
                     }
                 }
             ]
             
-            # 3. Perform the upsert
+        
             index.upsert(data_to_upsert)
             
             print(f"--- Success: {filename} uploaded to Endee Production! ---")
@@ -82,3 +81,24 @@ class EndeeClient:
         except Exception as e:
             print(f"--- SDK Upsert Error for {filename}: {e} ---")
             return False
+
+
+    def search_resumes(self, query_vector, top_k=5):
+        """
+        Matches official docs for high-precision querying.
+        """
+        try:
+            index = self.client.get_index(name=self.index_name)
+            
+            # Passing ef=128 for better accuracy and including vectors
+            results = index.query(
+                vector=query_vector,
+                top_k=top_k,
+                ef=128,
+                include_vectors=True
+            )
+            
+            return results
+        except Exception as e:
+            print(f"--- Search Error: {e} ---")
+            return []

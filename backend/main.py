@@ -113,7 +113,7 @@ async def upload_batch(files: List[UploadFile] = File(...)):
             vector = embedder.generate_vector(text_to_embed)
             
             # 3. Store in Endee
-            # Note: We pass the filename and raw_text as 'payload' (metadata)
+        
             success = db_client.insert_resume(
                 filename=file.filename,
                 vector=vector,
@@ -134,3 +134,23 @@ async def upload_batch(files: List[UploadFile] = File(...)):
             report.append({"file": file.filename, "status": f"Error: {str(e)}"})
             
     return {"summary": report, "total_processed": len(report)}
+
+@app.get("/search")
+async def search_resumes(query: str, top_k: int = 5):
+    # 1. Generate vector from user search string
+    query_vector = embedder.generate_vector(query)
+    
+    # 2. Get results from SDK
+    results = db_client.search_resumes(query_vector, top_k=top_k)
+    
+    # 3. Format exactly as the docs suggest
+    formatted_results = []
+    for item in results:
+        formatted_results.append({
+            "id": item['id'],               
+            "score": item['similarity'],   
+            "metadata": item.get('meta'),  
+            "vector_returned": "True" if 'vector' in item else "False"
+        })
+        
+    return {"results": formatted_results}

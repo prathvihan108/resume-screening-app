@@ -3,13 +3,13 @@ import time
 
 class OnlineEmbedder:
     def __init__(self, token):
-        # NEW URL: Specifically targets the feature-extraction pipeline
+       
         self.api_url = "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction"
         self.headers = {"Authorization": f"Bearer {token}"}
 
     def generate_vector(self, text):
         if not text:
-            # Important: Endee-09 expects a 384-dimension vector
+           
             return [0.0] * 384
             
         payload = {
