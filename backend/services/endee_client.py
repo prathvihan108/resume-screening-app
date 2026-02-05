@@ -1,44 +1,46 @@
-import requests
+from endee import Endee, Precision #
 import uuid
 
 class EndeeClient:
-    def __init__(self, host="localhost", port=8080):
-        self.base_url = f"http://{host}:{port}/api/v1"
 
-    
+
+
+    def __init__(self):
+        # Connects to your Docker container at localhost:8080
+        self.client = Endee()
+        self.index_name = "resumes"
+
     def initialize_collection(self):
-        """Checks if the 'resumes' collection exists; creates it if not."""
-        collection_url = f"{self.base_url}/collections/resumes"
-        
-        # 1. Check if collection exists
-        response = requests.get(collection_url)
-        
-        if response.status_code == 200:
-            print("--- Collection 'resumes' already exists. ---")
-            return
-        
-        # 2. Create collection if it's missing (404)
-        print("--- Creating 'resumes' collection (384 dimensions)... ---")
-        create_payload = {
-            "vectors": {
-                "size": 384,          # Must match your Hugging Face model
-                "distance": "Cosine"  # Best for resume similarity
-            }
-        }
-        
-        create_res = requests.put(collection_url, json=create_payload)
-        if create_res.status_code == 200:
-            print("--- Collection created successfully! ---")
-        else:
-            print(f"--- Error creating collection: {create_res.text} ---")
+        """Official production method to check and create indices."""
+        try:
+            # Step 1: Check if index exists by trying to 'get' it
+            try:
+                self.client.get_index(name=self.index_name)
+                print(f"--- Index '{self.index_name}' verified in Production DB! ---")
+                return # Index exists, we are done
+            except Exception:
+                # Step 2: If 'get_index' fails, it likely doesn't exist yet
+                print(f"--- Index not found. Creating {self.index_name}... ---")
+                self.client.create_index(
+                    name=self.index_name,
+                    dimension=384,
+                    space_type="cosine",
+                    precision=Precision.INT8D
+                )
+                print(f"--- SUCCESS: Production index created! ---")
+
+        except Exception as e:
+            # If even the creation fails, we need to know why
+            print(f"--- Critical SDK Error: {e} ---")
+    
 
     def check_health(self):
-        """Checks if the Dockerized Endee Engine is responding."""
-        try:
-            response = requests.get(f"{self.base_url}/health", timeout=5)
-            return response.status_code == 200
-        except requests.exceptions.ConnectionError:
-            return False
+            """Checks if the Dockerized Endee Engine is responding."""
+            try:
+                response = requests.get(f"{self.base_url}/health", timeout=5)
+                return response.status_code == 200
+            except requests.exceptions.ConnectionError:
+                return False
 
     def get_version(self):
         """Retrieves engine details to confirm connection."""
@@ -48,23 +50,35 @@ class EndeeClient:
         except:
             return None
 
+    import uuid
+
     def insert_resume(self, filename, vector, metadata):
-        # In Endee-09, we 'PUT' points into a collection
-        url = f"{self.base_url}/collections/resumes/points"
-        
-        payload = {
-            "points": [
+        """
+        Matches official Endee SDK 'upsert' pattern.
+        """
+        try:
+            # 1. Get the index object first, as shown in the docs
+            index = self.client.get_index(name=self.index_name)
+            
+            # 2. Build the list containing the resume data
+            # Note: We use 'meta' for metadata and 'vector' for the 384-dim embedding
+            data_to_upsert = [
                 {
-                    "id": str(uuid.uuid4()), # Generates a unique ID for each resume
-                    "vector": vector,
-                    "payload": {
+                    "id": str(uuid.uuid4()),  # Unique ID for each resume
+                    "vector": vector,         # Your 384-dimensional list
+                    "meta": {                 # Must be 'meta', not 'payload'
                         "filename": filename,
-                        **metadata # Unpacks skills and experience
+                        **metadata            # Includes skills, experience, etc.
                     }
                 }
             ]
-        }
+            
+            # 3. Perform the upsert
+            index.upsert(data_to_upsert)
+            
+            print(f"--- Success: {filename} uploaded to Endee Production! ---")
+            return True
 
-        response = requests.put(url, json=payload)
-        return response.status_code == 200
-
+        except Exception as e:
+            print(f"--- SDK Upsert Error for {filename}: {e} ---")
+            return False

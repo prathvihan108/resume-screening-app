@@ -112,7 +112,7 @@ async def upload_batch(files: List[UploadFile] = File(...)):
             text_to_embed = structured_data["skills"] if structured_data["skills"] else raw_text[:500]
             vector = embedder.generate_vector(text_to_embed)
             
-            # 3. Store in Endee-09
+            # 3. Store in Endee
             # Note: We pass the filename and raw_text as 'payload' (metadata)
             success = db_client.insert_resume(
                 filename=file.filename,
